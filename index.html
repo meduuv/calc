@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calc</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="calculator" aria-label="Calculator">
+    <div class="display">
+      <div id="history" class="history"></div>
+      <input id="display" type="text" value="0" aria-label="Calculator display" readonly>
+    </div>
+    <div class="keys">
+      <button class="action" data-action="clear">AC</button>
+      <button class="action" data-action="backspace">⌫</button>
+      <button class="action" data-value="%">%</button>
+      <button class="operator" data-value="/">÷</button>
+      <button data-value="7">7</button>
+      <button data-value="8">8</button>
+      <button data-value="9">9</button>
+      <button class="operator" data-value="*">×</button>
+      <button data-value="4">4</button>
+      <button data-value="5">5</button>
+      <button data-value="6">6</button>
+      <button class="operator" data-value="-">−</button>
+      <button data-value="1">1</button>
+      <button data-value="2">2</button>
+      <button data-value="3">3</button>
+      <button class="operator" data-value="+">+</button>
+      <button class="zero" data-value="0">0</button>
+      <button data-value=".">.</button>
+      <button class="equals" data-action="equals">=</button>
+    </div>
+  </main>
+  <script>
+    const display = document.getElementById('display');
+    const history = document.getElementById('history');
+    let expression = '';
+    let justCalculated = false;
+
+    function render() { display.value = expression || '0'; }
+    function add(value) {
+      if (justCalculated && /[0-9.]/.test(value)) expression = '';
+      justCalculated = false;
+      if (value === '.' && /(?:^|[+\-*/%])\d*\.\d*$/.test(expression)) return;
+      if (/[+\-*/%]/.test(value) && !expression) return;
+      if (/[+\-*/%]/.test(value) && /[+\-*/%]$/.test(expression)) expression = expression.slice(0, -1);
+      expression += value; render();
+    }
+    function calculate() {
+      if (!expression || /[+\-*/%]$/.test(expression)) return;
+      try {
+        const safe = expression.replace(/(\d+(?:\.\d+)?)%/g, '($1/100)');
+        if (!/^[0-9+\-*/().%\s]+$/.test(safe)) throw new Error();
+        const result = Function('"use strict"; return (' + safe + ')')();
+        if (!Number.isFinite(result)) throw new Error();
+        history.textContent = expression.replace(/\*/g, '×').replace(/\//g, '÷') + ' =';
+        expression = String(Number(result.toFixed(12)));
+        justCalculated = true; render();
+      } catch { display.value = 'Error'; expression = ''; }
+    }
+    document.querySelector('.keys').addEventListener('click', e => {
+      const button = e.target.closest('button');
+      if (!button) return;
+      const action = button.dataset.action;
+      if (action === 'clear') { expression = ''; history.textContent = ''; justCalculated = false; render(); }
+      else if (action === 'backspace') { expression = expression.slice(0, -1); justCalculated = false; render(); }
+      else if (action === 'equals') calculate();
+      else add(button.dataset.value);
+    });
+    document.addEventListener('keydown', e => {
+      if (/^[0-9.]$/.test(e.key) || '+-*/%'.includes(e.key)) add(e.key);
+      else if (e.key === 'Enter' || e.key === '=') calculate();
+      else if (e.key === 'Backspace') { expression = expression.slice(0, -1); render(); }
+      else if (e.key === 'Escape') { expression = ''; history.textContent = ''; render(); }
+    });
+  </script>
+</body>
+</html>
