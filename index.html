@@ -59,7 +59,7 @@
         history.textContent = expression.replace(/\*/g, '×').replace(/\//g, '÷') + ' =';
         expression = String(Number(result.toFixed(12)));
         justCalculated = true; render();
-      } catch { display.value = 'Error'; expression = ''; }
+      } catch { display.value = 'Error'; expression = ''; justCalculated = false; }
     }
     document.querySelector('.keys').addEventListener('click', e => {
       const button = e.target.closest('button');
@@ -73,8 +73,8 @@
     document.addEventListener('keydown', e => {
       if (/^[0-9.]$/.test(e.key) || '+-*/%'.includes(e.key)) add(e.key);
       else if (e.key === 'Enter' || e.key === '=') calculate();
-      else if (e.key === 'Backspace') { expression = expression.slice(0, -1); render(); }
-      else if (e.key === 'Escape') { expression = ''; history.textContent = ''; render(); }
+      else if (e.key === 'Backspace') { expression = expression.slice(0, -1); justCalculated = false; render(); }
+      else if (e.key === 'Escape') { expression = ''; history.textContent = ''; justCalculated = false; render(); }
     });
   </script>
 </body>
